@@ -16,7 +16,7 @@ export default function ApplicationForm() {
     totalFigures: '', totalWords: '',
   });
   const [formData, setFormData] = useState({
-    candidateName: '', email: '', permanentAddress: '', communicationAddress: '', dateOfBirth: '', age: '', gender: '', nationality: '', religion: '', community: '', category: '', bloodGroup: '', aadhaarNumber: '', quota: '', preference1: '', preference2: '', preference3: '', fatherName: '', fatherOccupation: '', fatherMobile: '', motherName: '', motherOccupation: '', motherMobile: '', annualIncome: '', guardianName: '', guardianRelation: '', guardianMobileNumber: '', lastInstitution: '', boardOfStudy: '', grandTotal: '', totalPercentage: '', totalPCM: '', pcmPercentage: '', entranceRegisterNo: '', entranceRank: '', sslcBoard: '', sslcPercentage: '', photo: null, parentSignature: null, applicantSignature: null
+    candidateName: '', email: '', permanentAddress: '', communicationAddress: '', dateOfBirth: '', age: '', gender: '', nationality: '', place: '', religion: '', community: '', category: '', bloodGroup: '', aadhaarNumber: '', quota: '', preference1: '', preference2: '', preference3: '', fatherName: '', fatherOccupation: '', fatherMobile: '', motherName: '', motherOccupation: '', motherMobile: '', annualIncome: '', guardianName: '', guardianRelation: '', guardianMobileNumber: '', lastInstitution: '', boardOfStudy: '', grandTotal: '', totalPercentage: '', totalPCM: '', pcmPercentage: '', entranceRegisterNo: '', entranceRank: '', sslcBoard: '', sslcPercentage: '', photo: null, parentSignature: null, applicantSignature: null
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,12 +26,11 @@ export default function ApplicationForm() {
   const validateMobile = (mobile) => /^\d{10}$/.test(mobile);
   const validateFile = (file) => {
     if (!file) return { valid: false, message: "File is required" };
-    if (file.size > 2097152) return { valid: false, message: "File size must be less than 2MB" };
+    if (file.size > 2097152) return { valid: false, message: "File size must be less than 150KB" };
     if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) return { valid: false, message: "Only image files are allowed" };
     return { valid: true };
   };
 
-  // FIX 2: Update handlers to work with the standard event object
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -49,11 +48,11 @@ export default function ApplicationForm() {
     setSubjects([...subjects, { id: newId, name: "", markObtained: "", maxMark: "", grade: "" }]);
   };
   const removeSubject = (id) => setSubjects(subjects.filter(subj => subj.id !== id));
-  
+
   const handleSubjectChange = (id, field, value) => {
     setSubjects(subjects.map(subj => subj.id === id ? { ...subj, [field]: value } : subj));
   };
-  
+
   const handleEntranceMarkChange = (field, value) => {
     setEntranceMarks(prev => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
@@ -62,7 +61,7 @@ export default function ApplicationForm() {
   const validateForm = () => {
     const newErrors = {};
     const requiredFields = {
-      candidateName: 'Name is required', email: 'Email is required', permanentAddress: 'Permanent address is required', communicationAddress: 'Communication address is required', dateOfBirth: 'Date of birth is required', age: 'Age is required', gender: 'Gender is required', nationality: 'Nationality is required', religion: 'Religion is required', community: 'Community is required', category: 'Category is required', bloodGroup: 'Blood group is required', aadhaarNumber: 'Aadhaar number is required', quota: 'Admission quota is required', preference1: 'First preference is required', preference2: 'Second preference is required', preference3: 'Third preference is required', fatherName: "Father's name is required", fatherOccupation: "Father's occupation is required", fatherMobile: "Father's mobile is required", motherName: "Mother's name is required", motherOccupation: "Mother's occupation is required", motherMobile: "Mother's mobile is required", annualIncome: 'Annual family income is required', guardianName: "Guardian's name is required", guardianRelation: "Guardian's relation is required", guardianMobileNumber: "Guardian's mobile is required", lastInstitution: 'Last institution is required', boardOfStudy: 'Board of study is required', grandTotal: 'Grand Total is required', totalPercentage: 'Total Percentage is required', totalPCM: 'Total PCM is required', pcmPercentage: 'PCM Percentage is required', entranceRegisterNo: 'Entrance register number is required', entranceRank: 'Entrance rank is required', sslcBoard: 'SSLC board is required', sslcPercentage: 'SSLC percentage is required'
+      candidateName: 'Name is required', email: 'Email is required', permanentAddress: 'Permanent address is required', communicationAddress: 'Communication address is required', dateOfBirth: 'Date of birth is required', age: 'Age is required', gender: 'Gender is required', nationality: 'Nationality is required', place: 'Place is required', religion: 'Religion is required', community: 'Community is required', category: 'Category is required', bloodGroup: 'Blood group is required', aadhaarNumber: 'Aadhaar number is required', quota: 'Admission quota is required', preference1: 'First preference is required', preference2: 'Second preference is required', preference3: 'Third preference is required', fatherName: "Father's name is required", fatherOccupation: "Father's occupation is required", fatherMobile: "Father's mobile is required", motherName: "Mother's name is required", motherOccupation: "Mother's occupation is required", motherMobile: "Mother's mobile is required", annualIncome: 'Annual family income is required', guardianName: "Guardian's name is required", guardianRelation: "Guardian's relation is required", guardianMobileNumber: "Guardian's mobile is required", lastInstitution: 'Last institution is required', boardOfStudy: 'Board of study is required', grandTotal: 'Grand Total is required', totalPercentage: 'Total Percentage is required', totalPCM: 'Total PCM is required', pcmPercentage: 'PCM Percentage is required', entranceRegisterNo: 'Entrance register number is required', entranceRank: 'Entrance rank is required', sslcBoard: 'SSLC board is required', sslcPercentage: 'SSLC percentage is required'
     };
     Object.keys(requiredFields).forEach(field => {
       if (!formData[field] || formData[field].toString().trim() === '') newErrors[field] = requiredFields[field];
@@ -172,7 +171,6 @@ export default function ApplicationForm() {
           <section className="bg-white shadow-lg rounded-xl border-gray-200 p-6">
             <h3 className="text-xl font-bold text-green-800 mb-4">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* FIX 3: All onChange calls are now consistent */}
               <MemoizedInputField label="Name of the Candidate" name="candidateName" required value={formData.candidateName} onChange={handleInputChange} error={errors.candidateName} />
               <MemoizedInputField label="Email" name="email" type="email" required value={formData.email} onChange={handleInputChange} error={errors.email} />
               <div className="md:col-span-2">
@@ -198,12 +196,13 @@ export default function ApplicationForm() {
                 <ErrorMessage error={errors.gender} />
               </div>
               <MemoizedInputField label="Nationality" name="nationality" required value={formData.nationality} onChange={handleInputChange} error={errors.nationality} />
-              <MemoizedInputField label="Religion" name="religion" required value={formData.religion} onChange={handleInputChange} error={errors.religion} />
+              <MemoizedInputField placeholder='Enter your place. Ex: Piravom' label="Place" name="place" required value={formData.place} onChange={handleInputChange} error={errors.place} />
+              <MemoizedInputField placeholder="Ex: Hindu, Muslim, Christian, ....." label="Religion" name="religion" required value={formData.religion} onChange={handleInputChange} error={errors.religion} />
               <MemoizedInputField label="Community" name="community" required value={formData.community} onChange={handleInputChange} error={errors.community} />
-              <MemoizedInputField label="Category" name="category" required value={formData.category} onChange={handleInputChange} error={errors.category} />
+              <MemoizedInputField placeholder="Ex: General, OBC, ......." label="Category" name="category" required value={formData.category} onChange={handleInputChange} error={errors.category} />
               <MemoizedInputField label="Blood Group" name="bloodGroup" required value={formData.bloodGroup} onChange={handleInputChange} error={errors.bloodGroup} />
-              <MemoizedInputField label="Aadhaar Number" name="aadhaarNumber" required value={formData.aadhaarNumber} onChange={handleInputChange} error={errors.aadhaarNumber} />
-              <MemoizedInputField label="Admission Quota" name="quota" required value={formData.quota} onChange={handleInputChange} error={errors.quota} />
+              <MemoizedInputField placeholder="12 digit Aadhaar number" label="Aadhaar Number" name="aadhaarNumber" required value={formData.aadhaarNumber} onChange={handleInputChange} error={errors.aadhaarNumber} />
+              <MemoizedInputField placeholder="Ex: Management, NRI, Merit, ......." label="Admission Quota" name="quota" required value={formData.quota} onChange={handleInputChange} error={errors.quota} />
               <div className="md:col-span-2">
                 <label className="block mb-2 font-semibold text-gray-700">Order of Preference of Branches <span className="text-red-500">*</span></label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -225,7 +224,7 @@ export default function ApplicationForm() {
           </section>
 
           {/* ... other form sections ... */}
-           <section className="bg-white shadow-lg rounded-xl border-gray-200 p-6">
+          <section className="bg-white shadow-lg rounded-xl border-gray-200 p-6">
             <h3 className="text-xl font-bold text-green-800 mb-4">Family Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <MemoizedInputField label="Father's Name" name="fatherName" required value={formData.fatherName} onChange={handleInputChange} error={errors.fatherName} />
@@ -236,7 +235,7 @@ export default function ApplicationForm() {
               <MemoizedInputField label="Mother's Mobile" name="motherMobile" required value={formData.motherMobile} onChange={handleInputChange} error={errors.motherMobile} />
               <MemoizedInputField label="Annual Family Income" name="annualIncome" type="number" required className="md:col-span-2" value={formData.annualIncome} onChange={handleInputChange} error={errors.annualIncome} />
               <MemoizedInputField label="Guardian's Name" name="guardianName" required value={formData.guardianName} onChange={handleInputChange} error={errors.guardianName} />
-              <MemoizedInputField label="Guardian's Relation" name="guardianRelation" required value={formData.guardianRelation} onChange={handleInputChange} error={errors.guardianRelation} />
+              <MemoizedInputField placeholder="Ex: Father, Mother, ......" label="Guardian's Relation" name="guardianRelation" required value={formData.guardianRelation} onChange={handleInputChange} error={errors.guardianRelation} />
               <MemoizedInputField label="Guardian's Mobile No." name="guardianMobileNumber" required value={formData.guardianMobileNumber} onChange={handleInputChange} error={errors.guardianMobileNumber} />
             </div>
           </section>
@@ -244,7 +243,7 @@ export default function ApplicationForm() {
             <h3 className="text-xl font-bold text-green-800 mb-4">Academic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <MemoizedInputField label="Institution Last Studied" name="lastInstitution" required value={formData.lastInstitution} onChange={handleInputChange} error={errors.lastInstitution} />
-              <MemoizedInputField label="Board of Study" name="boardOfStudy" required value={formData.boardOfStudy} onChange={handleInputChange} error={errors.boardOfStudy} />
+              <MemoizedInputField placeholder="Ex: HSE, VHSE, ......" label="Board of Study" name="boardOfStudy" required value={formData.boardOfStudy} onChange={handleInputChange} error={errors.boardOfStudy} />
             </div>
             <div className="mb-6">
               <h4 className="font-semibold text-gray-700 mb-3">Subject-wise Marks <span className="text-red-500">*</span></h4>
@@ -275,9 +274,9 @@ export default function ApplicationForm() {
               <h4 className="font-semibold text-gray-700 mb-3">Enter Totals</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <MemoizedInputField label="Grand Total" name="grandTotal" type="number" required value={formData.grandTotal} onChange={handleInputChange} error={errors.grandTotal} />
-                <MemoizedInputField label="Total Percentage" name="totalPercentage" placeholder="e.g. 95%" required value={formData.totalPercentage} onChange={handleInputChange} error={errors.totalPercentage} />
-                <MemoizedInputField label="Total PCM" name="totalPCM" type="number" required value={formData.totalPCM} onChange={handleInputChange} error={errors.totalPCM} />
-                <MemoizedInputField label="PCM Percentage" name="pcmPercentage" placeholder="e.g. 98%" required value={formData.pcmPercentage} onChange={handleInputChange} error={errors.pcmPercentage} />
+                <MemoizedInputField label="Total Percentage" name="totalPercentage" placeholder="Ex: 95" required value={formData.totalPercentage} onChange={handleInputChange} error={errors.totalPercentage} />
+                <MemoizedInputField placeholder="Marks of Physics+Chemistry+Maths" label="Total PCM" name="totalPCM" type="number" required value={formData.totalPCM} onChange={handleInputChange} error={errors.totalPCM} />
+                <MemoizedInputField label="PCM Percentage" name="pcmPercentage" placeholder="Ex: 98" required value={formData.pcmPercentage} onChange={handleInputChange} error={errors.pcmPercentage} />
               </div>
             </div>
           </section>
@@ -341,7 +340,7 @@ export default function ApplicationForm() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <MemoizedInputField label="SSLC Board" name="sslcBoard" required value={formData.sslcBoard} onChange={handleInputChange} error={errors.sslcBoard} />
-              <MemoizedInputField label="SSLC Percentage" name="sslcPercentage" type="number" required value={formData.sslcPercentage} onChange={handleInputChange} error={errors.sslcPercentage} />
+              <MemoizedInputField placeholder="Ex: 95" label="SSLC Percentage" name="sslcPercentage" type="number" required value={formData.sslcPercentage} onChange={handleInputChange} error={errors.sslcPercentage} />
             </div>
           </section>
           <section className="bg-white shadow-lg rounded-xl border-gray-200 p-6">
