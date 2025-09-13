@@ -344,13 +344,23 @@ export default function ApplicationForm() {
             </div>
           </section>
           <section className="bg-white shadow-lg rounded-xl border-gray-200 p-6">
-            <h3 className="text-xl font-bold text-green-800 mb-4">Document Uploads</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <MemoizedFileField label="Passport Size Photo" name="photo" required onChange={handleFileChange} error={errors.photo} />
-              <MemoizedFileField label="Parent Signature" name="parentSignature" required onChange={handleFileChange} error={errors.parentSignature} />
-              <MemoizedFileField label="Applicant Signature" name="applicantSignature" required onChange={handleFileChange} error={errors.applicantSignature} />
+            <div>
+              <h3 className="text-xl font-bold text-green-800 mb-4">Document Uploads & Consent</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <MemoizedFileField label="Passport Size Photo" name="photo" required onChange={handleFileChange} error={errors.photo} />
+                <MemoizedFileField label="Parent Signature" name="parentSignature" required onChange={handleFileChange} error={errors.parentSignature} />
+                <MemoizedFileField label="Applicant Signature" name="applicantSignature" required onChange={handleFileChange} error={errors.applicantSignature} />
+              </div>
+              <p className="text-gray-500 text-sm mt-4">* Only image files (JPEG, JPG, PNG) are allowed. Maximum file size: 150KB</p>
             </div>
-            <p className="text-gray-500 text-sm mt-4">* Only image files (JPEG, JPG, PNG) are allowed. Maximum file size: 150KB</p>
+            <div className="">
+              <h3 className="text-lg font-bold text-gray-600 mt-3">Declaration <span className="text-red-400">*</span></h3>
+              <input type="checkbox" className="mr-2" name="declaration" id="declaration" required/>
+              <label htmlFor="declaration">
+                We, the applicant & parent / guardian do hereby declare that all the information furnished above are true and correct and we will obey the rules and regulations of the Institution, if admitted. Also we understand that the admission shall be, subject to satisfying the eligibility norms prescribed by the Statutory Authorities and the state Govt. from time to time.
+              </label>
+            </div>
+
           </section>
 
           <div className="flex justify-center pt-6">
