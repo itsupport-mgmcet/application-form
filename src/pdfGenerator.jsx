@@ -1,0 +1,259 @@
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+const fileToBase64 = (file) => {
+    return new Promise((resolve) => {
+        if (!file) {
+            resolve(null);
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+    });
+};
+
+export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) => {
+    const userDate = prompt(
+        "Enter the date for the document (DD/MM/YYYY):",
+        new Date().toLocaleDateString('en-GB')
+    );
+
+    if (!userDate) {
+        alert("PDF generation cancelled.");
+        return;
+    }
+
+    const doc = new jsPDF();
+
+    const [photoBase64, parentSignBase64, applicantSignBase64] = await Promise.all([
+        fileToBase64(formData.photo),
+        fileToBase64(formData.parentSignature),
+        fileToBase64(formData.applicantSignature),
+    ]);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageCenterX = pageWidth / 2;
+
+    // --- Page 1: Personal & Academic Prefaces (Items 1 - 20) ---
+    doc.rect(10, 10, pageWidth - 20, pageHeight - 20); // Page 1 Border
+    const headerTextX = 37;
+    doc.addImage('/mgm_logo.png', 'PNG', 18, 17, 15, 20);
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('MGM COLLEGE OF ENGINEERING & TECHNOLOGY', headerTextX, 23);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('MGM Technological campus, Pampakuda P.O, Ernakulam-686667, Kerala', headerTextX, 29);
+    doc.text('Approved by AICTE and Affiliated to APJ Abdul Kalam Technological University, Kerala', headerTextX, 35);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('APPLICATION FOR ADMISSION TO B.TECH DEGREE COURSE 2025-2026', pageCenterX, 45, { align: 'center' });
+    doc.text('UNDER GOVERNMENT / MANAGEMENT / NRI QUOTA', pageCenterX, 50, { align: 'center' });
+
+    if (photoBase64) {
+        doc.addImage(photoBase64, 'JPEG', 155, 50, 25, 32);
+    } else {
+        doc.rect(155, 57, 25, 32);
+        doc.text("Photo", 167.5, 73, { align: 'center' });
+    }
+    const preferencesText = `1. ${formData.preference1 || ''}\n2. ${formData.preference2 || ''}\n3. ${formData.preference3 || ''}`;
+
+    const personalInfoBody = [
+        ['1', 'Name of the Candidate', formData.candidateName || ''],
+        ['2', 'Permanent Address', formData.permanentAddress || ''],
+        ['3', 'Address For Communication', formData.communicationAddress || ''],
+        ['4', 'Email', formData.email || ''],
+        ['5', 'Date of Birth', formData.dateOfBirth || ''],
+        ['6', 'Age', formData.age || ''],
+        ['7', 'Gender', formData.gender || ''],
+        ['8', 'Nationality', formData.nationality || ''],
+        ['9', 'Religion', formData.religion || ''],
+        ['10', 'Community', formData.community || ''],
+        ['11', 'Category', formData.category || ''],
+        ['12', 'Blood Group', formData.bloodGroup || ''],
+        ['13', 'Aadhaar Number', formData.aadhaarNumber || ''],
+        ["14(a)", "Father's Name", formData.fatherName || ''],
+        ['14(b)', 'Occupation', formData.fatherOccupation || ''],
+        ['14(c)', 'Mobile No', formData.fatherMobile || ''],
+        ["15(a)", "Mother's Name", formData.motherName || ''],
+        ['15(b)', 'Occupation', formData.motherOccupation || ''],
+        ['15(c)', 'Mobile No', formData.motherMobile || ''],
+        ['16', 'Annual Family Income', formData.annualIncome || ''],
+        ["17(a)", "Guardian's Name", formData.guardianName || ''],
+        ['17(b)', 'Relation', formData.guardianRelation || ''],
+        ['17(c)', 'Mobile No', formData.guardianMobileNumber || ''],
+        ['18', 'Order of preference of branches offered', preferencesText],
+        ['19', 'Name of the Institution last studied', formData.lastInstitution || ''],
+        ['20', 'Board of Study (+2)', formData.boardOfStudy || ''],
+    ];
+
+    autoTable(doc, {
+        startY: 80,
+        body: personalInfoBody,
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 1.5 },
+        columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 50 } },
+    });
+
+
+    // --- Page 2: All Mark Details (Items 21 - 24) ---
+    doc.addPage();
+    doc.rect(10, 10, pageWidth - 20, pageHeight - 20); // Page 2 Border
+
+    autoTable(doc, {
+        startY: 20, // Start near top of new page
+        head: [['21', 'Details of Marks secured in the plus two examination']],
+        headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
+        theme: 'grid',
+    });
+
+    const subjectTableBody = subjects.map(subj => [
+        subj.name || '', subj.markObtained || '', subj.maxMark || '', subj.grade || '',
+    ]);
+
+    autoTable(doc, {
+        head: [['Subject', 'Mark Obtained', 'Maximum Marks', 'Grade']],
+        body: subjectTableBody,
+        theme: 'grid',
+        headStyles: { fillColor: [220, 220, 220], textColor: 0 },
+        styles: { fontSize: 9 },
+    });
+
+    autoTable(doc, {
+        theme: 'grid',
+        styles: { fontSize: 9, fontStyle: 'bold' },
+        body: [
+            [`Grand Total: ${formData.grandTotal}`, `Total Percentage: ${formData.totalPercentage}`],
+            [`Total PCM: ${formData.totalPCM}`, `PCM Percentage: ${formData.pcmPercentage}`],
+        ],
+        columnStyles: { 0: { halign: 'right', cellPadding: 2 }, 1: { halign: 'right', cellPadding: 2 } },
+    });
+
+    autoTable(doc, {
+        head: [['22', 'Details of Entrance examination']],
+        headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
+        theme: 'grid',
+    });
+
+    autoTable(doc, {
+        body: [
+            ['22(a)', 'Register No', formData.entranceRegisterNo || ''],
+            ['22(b)', 'Rank', formData.entranceRank || ''],
+        ],
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 1.5 },
+        columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 50 } },
+    });
+
+    autoTable(doc, {
+        head: [
+            [{ content: 'Subject / Paper', rowSpan: 2, styles: { valign: 'middle' } }, { content: 'Marks Scored', colSpan: 2, styles: { halign: 'center' } }],
+            ['In Figures', 'In Words'],
+        ],
+        // UPDATED: Body of the entrance marks table
+        body: [
+            ['Paper I (Physics & Chemistry)', entranceMarks.paper1Figures || '', entranceMarks.paper1Words || ''],
+            ['Paper II (Mathematics)', entranceMarks.paper2Figures || '', entranceMarks.paper2Words || ''],
+            ['Total Marks', entranceMarks.totalFigures || '', entranceMarks.totalWords || ''],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [220, 220, 220], textColor: 0, halign: 'center' },
+    });
+
+    autoTable(doc, {
+        head: [['23', 'Details of Marks secured in the SSLC examination']],
+        headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
+        theme: 'grid',
+    });
+
+    autoTable(doc, {
+        body: [
+            ['23(a)', 'Board of Study', formData.sslcBoard || ''],
+            ['23(b)', 'Total % of marks', formData.sslcPercentage || ''],
+            ['24', 'Admission Quota', formData.quota || ''],
+        ],
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 1.5 },
+        columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 50 } },
+    });
+
+    // --- Page 3: Declaration & Certificate ---
+    doc.addPage();
+    doc.rect(10, 10, pageWidth - 20, pageHeight - 20); // Page 3 Border
+
+    let finalY = 30; // Start position for Declaration page content
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('Declaration', pageCenterX, finalY, { align: 'center' });
+    finalY += 15;
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    const declaration = 'We, the applicant & parent / guardian do hereby declare that all the information furnished above are true and correct and we will obey the rules and regulations of the Institution, if admitted. Also we understand that the admission shall be, subject to satisfying the eligibility norms prescribed by the Statutory Authorities and the state Govt. from time to time.';
+    const splitDeclaration = doc.splitTextToSize(declaration, 170);
+    doc.text(splitDeclaration, 20, finalY);
+    finalY += 25;
+
+    doc.text(`Place:`, 20, finalY);
+    doc.text(`Date: ${userDate}`, 20, finalY + 8);
+
+    doc.text(`Name: ${formData.candidateName || ''}`, 120, finalY);
+    doc.text('Signature of the Parent:', 20, finalY + 25);
+    doc.text('Signature of the Applicant:', 120, finalY + 25);
+
+    if (parentSignBase64) doc.addImage(parentSignBase64, 'JPEG', 20, finalY + 30, 40, 15);
+    if (applicantSignBase64) doc.addImage(applicantSignBase64, 'JPEG', 120, finalY + 30, 40, 15);
+
+    finalY += 60;
+
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('FOR OFFICE USE ONLY', pageCenterX, finalY, { align: 'center' });
+    finalY += 10;
+
+    const text = 'CERTIFICATE';
+    doc.text(text, pageCenterX, finalY, { align: 'center' });
+
+    const textWidth = doc.getTextWidth(text);
+    const startX = pageCenterX - textWidth / 2;
+    const endX = pageCenterX + textWidth / 2;
+    const underlineY = finalY + 1;
+    doc.line(startX, underlineY, endX, underlineY);
+    finalY += 10;
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    const certificate = 'Certified that the candidate has passed the qualifying examination mentioned and I have verified the original mark list with the entries made above and found correct.';
+    const splitCertificate = doc.splitTextToSize(certificate, 170);
+    doc.text(splitCertificate, 20, finalY);
+    finalY += 20;
+
+    doc.setFont(undefined, 'bold');
+    doc.text('Place:', 20, finalY);
+    doc.text('Signature:', 120, finalY);
+    finalY += 8;
+    doc.text('Date:', 20, finalY);
+    doc.text('Name:', 120, finalY);
+    finalY += 8;
+    doc.text('Designation:', 120, finalY);
+    finalY += 15;
+
+    doc.setFont(undefined, 'normal');
+    const admission = `The above candidate is admitted Provisionally to ___________________________________________ on _______________________________________ under Government / Management / NRI Quota.`;
+    const splitAdmission = doc.splitTextToSize(admission, 170);
+    doc.setLineHeightFactor(1.5);
+    doc.text(splitAdmission, 20, finalY);
+    finalY += 25;
+
+    doc.setLineHeightFactor(1);
+    doc.setFont(undefined, 'bold');
+    doc.text('Signature of Director', 20, finalY);
+    doc.text('Signature of Principal', 150, finalY);
+    doc.setFont(undefined, 'normal');
+
+    const candidateName = formData.candidateName || 'Application';
+    doc.save(`${candidateName.replace(/\s+/g, '_')}_Application.pdf`);
+};
