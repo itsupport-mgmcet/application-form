@@ -1,16 +1,28 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import toast from "react-hot-toast";
 
-const fileToBase64 = (file) => {
+const fileOrUrlToBase64 = (fileOrUrl) => {
     return new Promise((resolve) => {
-        if (!file) {
-            resolve(null);
-            return;
+        if (!fileOrUrl) {
+            return resolve(null);
         }
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(file);
+        if (typeof fileOrUrl === 'string') {
+            fetch(fileOrUrl)
+                .then(response => response.blob())
+                .then(blob => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = () => resolve(null);
+                    reader.readAsDataURL(blob);
+                })
+                .catch(() => resolve(null));
+        } else {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(fileOrUrl);
+        }
     });
 };
 
@@ -21,16 +33,20 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     );
 
     if (!userDate) {
-        alert("PDF generation cancelled.");
+        try {
+            toast.error("PDF generation cancelled.");
+        } catch (e) {
+            toast.error(`PDF Generation cancelled: ${e}`);
+        }
         return;
     }
 
     const doc = new jsPDF();
 
     const [photoBase64, parentSignBase64, applicantSignBase64] = await Promise.all([
-        fileToBase64(formData.photo),
-        fileToBase64(formData.parentSignature),
-        fileToBase64(formData.applicantSignature),
+        fileOrUrlToBase64(formData.photo),
+        fileOrUrlToBase64(formData.parentSignature),
+        fileOrUrlToBase64(formData.applicantSignature),
     ]);
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -51,6 +67,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     doc.setFont(undefined, 'bold');
     doc.text('APPLICATION FOR ADMISSION TO B.TECH DEGREE COURSE 2025-2026', pageCenterX, 45, { align: 'center' });
     doc.text('UNDER GOVERNMENT / MANAGEMENT / NRI QUOTA', pageCenterX, 50, { align: 'center' });
+    doc.text(`Application No: ${formData.appId || ''}`, 20, 65);
 
     if (photoBase64) {
         doc.addImage(photoBase64, 'JPEG', 155, 50, 25, 32);
@@ -103,7 +120,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     doc.rect(10, 10, pageWidth - 20, pageHeight - 20); // Page 2 Border
 
     autoTable(doc, {
-        startY: 20, // Start near top of new page
+        startY: 20,
         head: [['21', 'Details of Marks secured in the plus two examination']],
         headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
         theme: 'grid',
@@ -152,7 +169,6 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
             [{ content: 'Subject / Paper', rowSpan: 2, styles: { valign: 'middle' } }, { content: 'Marks Scored', colSpan: 2, styles: { halign: 'center' } }],
             ['In Figures', 'In Words'],
         ],
-        // UPDATED: Body of the entrance marks table
         body: [
             ['Paper I (Physics & Chemistry)', entranceMarks.paper1Figures || '', entranceMarks.paper1Words || ''],
             ['Paper II (Mathematics)', entranceMarks.paper2Figures || '', entranceMarks.paper2Words || ''],
@@ -172,6 +188,14 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
         body: [
             ['23(a)', 'Board of Study', formData.sslcBoard || ''],
             ['23(b)', 'Total % of marks', formData.sslcPercentage || ''],
+        ],
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 1.5 },
+        columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 50 } },
+    });
+
+    autoTable(doc, {
+        body: [
             ['24', 'Admission Quota', formData.quota || ''],
         ],
         theme: 'grid',
@@ -183,7 +207,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     doc.addPage();
     doc.rect(10, 10, pageWidth - 20, pageHeight - 20); // Page 3 Border
 
-    let finalY = 30; // Start position for Declaration page content
+    let finalY = 30;
 
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
@@ -254,6 +278,30 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     doc.text('Signature of Principal', 150, finalY);
     doc.setFont(undefined, 'normal');
 
+
+    const pageCount = doc.internal.getNumberOfPages();
+    const siteUrl = window.location.href;
+    const dateTimeString = `${new Date().toLocaleString('en-IN')}`;
+
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i); // Go to page i
+
+        // --- Header ---
+        doc.setFontSize(8);
+        doc.setTextColor(150); // Set color to a light gray
+        
+        // Top-left: Current Date and Time
+        doc.text(dateTimeString, 10, 7);
+
+        // Top-right: Website URL
+        doc.text(siteUrl, pageWidth - 10, 7, { align: 'right' });
+
+        // --- Footer ---
+        // Bottom-right: Page Number
+        doc.text(`Page ${i} of ${pageCount}`, pageWidth - 10, pageHeight - 7, { align: 'right' });
+    }
+
+    // --- Final Save ---
     const candidateName = formData.candidateName || 'Application';
     doc.save(`${candidateName.replace(/\s+/g, '_')}_Application.pdf`);
 };
