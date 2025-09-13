@@ -31,12 +31,13 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
         "Enter the date for the document (DD/MM/YYYY):",
         new Date().toLocaleDateString('en-GB')
     );
+    console.log(formData.place)
 
     if (!userDate) {
         try {
             toast.error("PDF generation cancelled.");
         } catch (e) {
-            toast.error(`PDF Generation cancelled: ${e}`);
+            console.error(`PDF Generation cancelled: ${e}`);
         }
         return;
     }
@@ -221,7 +222,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     doc.text(splitDeclaration, 20, finalY);
     finalY += 25;
 
-    doc.text(`Place:`, 20, finalY);
+    doc.text(`Place: ${formData.place || ' '}`, 20, finalY);
     doc.text(`Date: ${userDate}`, 20, finalY + 8);
 
     doc.text(`Name: ${formData.candidateName || ''}`, 120, finalY);
@@ -256,14 +257,14 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     finalY += 20;
 
     doc.setFont(undefined, 'bold');
-    doc.text('Place:', 20, finalY);
+    doc.text(`Place: `, 20, finalY);
     doc.text('Signature:', 120, finalY);
     finalY += 8;
     doc.text('Date:', 20, finalY);
     doc.text('Name:', 120, finalY);
     finalY += 8;
     doc.text('Designation:', 120, finalY);
-    finalY += 15;
+    finalY += 15; 
 
     doc.setFont(undefined, 'normal');
     const admission = `The above candidate is admitted Provisionally to ___________________________________________ on _______________________________________ under Government / Management / NRI Quota.`;
