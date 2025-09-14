@@ -79,7 +79,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     const preferencesText = `1. ${formData.preference1 || ''}\n2. ${formData.preference2 || ''}\n3. ${formData.preference3 || ''}`;
 
     const personalInfoBody = [
-        ['1', 'Name of the Candidate', formData.candidateName || ''],
+        ['1', 'Name of the Candidate', formData.candidateName.toUpperCase() || ''],
         ['2', 'Permanent Address', formData.permanentAddress || ''],
         ['3', 'Address For Communication', formData.communicationAddress || ''],
         ['4', 'Email', formData.email || ''],
