@@ -112,7 +112,6 @@ export default function ApplicationForm() {
     setErrors({});
 
     try {
-      alert("Uploading images, please wait...");
       const [photoURL, parentSignatureURL, applicantSignatureURL] = await Promise.all([
         uploadImageToCloudinary(formData.photo),
         uploadImageToCloudinary(formData.parentSignature),
