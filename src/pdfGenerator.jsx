@@ -26,7 +26,19 @@ const fileOrUrlToBase64 = (fileOrUrl) => {
     });
 };
 
-export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) => {
+export const generateAndDownloadPdf = async (formData, subjects, entranceMarks, hasTakenEntrance) => {
+    function toSentenceCase(str) {
+        if (!str) return "";
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+
+    function toTitleCase(str) {
+        if (!str) return "";
+        return str
+            .toLowerCase()
+            .replace(/\b\w/g, c => c.toUpperCase());
+    }
+
     const userDate = prompt(
         "Enter the date for the document (DD/MM/YYYY):",
         new Date().toLocaleDateString('en-GB')
@@ -54,6 +66,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     const pageCenterX = pageWidth / 2;
 
     // --- Page 1: Personal & Academic Prefaces (Items 1 - 20) ---
+    // This page remains unchanged
     doc.rect(10, 10, pageWidth - 20, pageHeight - 20); // Page 1 Border
     const headerTextX = 37;
     doc.addImage('/mgm_logo.png', 'PNG', 18, 17, 15, 20);
@@ -80,31 +93,31 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
 
     const personalInfoBody = [
         ['1', 'Name of the Candidate', formData.candidateName.toUpperCase() || ''],
-        ['2', 'Permanent Address', formData.permanentAddress || ''],
-        ['3', 'Address For Communication', formData.communicationAddress || ''],
-        ['4', 'Email', formData.email || ''],
+        ['2', 'Permanent Address', toTitleCase(formData.permanentAddress) || ''],
+        ['3', 'Address For Communication', toTitleCase(formData.communicationAddress) || ''],
+        ['4', 'Email', formData.email.toLowerCase() || ''],
         ['5', 'Date of Birth', formData.dateOfBirth || ''],
         ['6', 'Age', formData.age || ''],
-        ['7', 'Gender', formData.gender || ''],
-        ['8', 'Nationality', formData.nationality || ''],
-        ['9', 'Religion', formData.religion || ''],
-        ['10', 'Community', formData.community || ''],
-        ['11', 'Category', formData.category || ''],
-        ['12', 'Blood Group', formData.bloodGroup || ''],
+        ['7', 'Gender', toSentenceCase(formData.gender) || ''],
+        ['8', 'Nationality', toSentenceCase(formData.nationality) || ''],
+        ['9', 'Religion', toSentenceCase(formData.religion) || ''],
+        ['10', 'Community', toTitleCase(formData.community) || ''],
+        ['11', 'Category', formData.category.toUpperCase() || ''],
+        ['12', 'Blood Group', toSentenceCase(formData.bloodGroup) || ''],
         ['13', 'Aadhaar Number', formData.aadhaarNumber || ''],
-        ["14(a)", "Father's Name", formData.fatherName || ''],
-        ['14(b)', 'Occupation', formData.fatherOccupation || ''],
+        ["14(a)", "Father's Name", toTitleCase(formData.fatherName) || ''],
+        ['14(b)', 'Occupation', toTitleCase(formData.fatherOccupation) || ''],
         ['14(c)', 'Mobile No', formData.fatherMobile || ''],
-        ["15(a)", "Mother's Name", formData.motherName || ''],
-        ['15(b)', 'Occupation', formData.motherOccupation || ''],
+        ["15(a)", "Mother's Name", toTitleCase(formData.motherName) || ''],
+        ['15(b)', 'Occupation', toTitleCase(formData.motherOccupation) || ''],
         ['15(c)', 'Mobile No', formData.motherMobile || ''],
         ['16', 'Annual Family Income', formData.annualIncome || ''],
-        ["17(a)", "Guardian's Name", formData.guardianName || ''],
-        ['17(b)', 'Relation', formData.guardianRelation || ''],
+        ["17(a)", "Guardian's Name", toTitleCase(formData.guardianName) || ''],
+        ['17(b)', 'Relation', toSentenceCase(formData.guardianRelation) || ''],
         ['17(c)', 'Mobile No', formData.guardianMobileNumber || ''],
-        ['18', 'Order of preference of branches offered', preferencesText],
-        ['19', 'Name of the Institution last studied', formData.lastInstitution || ''],
-        ['20', 'Board of Study (+2)', formData.boardOfStudy || ''],
+        ['18', 'Order of preference of branches offered', toTitleCase(preferencesText)],
+        ['19', 'Name of the Institution last studied', toTitleCase(formData.lastInstitution) || ''],
+        ['20', 'Board of Study (+2)', formData.boardOfStudy.toUpperCase() || ''],
     ];
 
     autoTable(doc, {
@@ -128,7 +141,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     });
 
     const subjectTableBody = subjects.map(subj => [
-        subj.name || '', subj.markObtained || '', subj.maxMark || '', subj.grade || '',
+        toSentenceCase(subj.name) || '', subj.markObtained || '', subj.maxMark || '', toTitleCase(subj.grade) || '',
     ]);
 
     autoTable(doc, {
@@ -149,45 +162,48 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
         columnStyles: { 0: { halign: 'right', cellPadding: 2 }, 1: { halign: 'right', cellPadding: 2 } },
     });
 
+    // --- MODIFIED: Conditionally render the entire entrance exam section ---
+    if (hasTakenEntrance && entranceMarks) {
+        autoTable(doc, {
+            head: [['22', 'Details of Entrance examination']],
+            headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
+            theme: 'grid',
+        });
+
+        autoTable(doc, {
+            body: [
+                ['22(a)', 'Register No', formData.entranceRegisterNo || ''],
+                ['22(b)', 'Rank', formData.entranceRank || ''],
+            ],
+            theme: 'grid',
+            styles: { fontSize: 9, cellPadding: 1.5 },
+            columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 50 } },
+        });
+
+        autoTable(doc, {
+            head: [
+                [{ content: 'Subject / Paper', rowSpan: 2, styles: { valign: 'middle' } }, { content: 'Marks Scored', colSpan: 2, styles: { halign: 'center' } }],
+                ['In Figures', 'In Words'],
+            ],
+            body: [
+                ['Paper I (Physics & Chemistry)', entranceMarks.paper1Figures || '', toTitleCase(entranceMarks.paper1Words) || ''],
+                ['Paper II (Mathematics)', entranceMarks.paper2Figures || '', toTitleCase(entranceMarks.paper2Words) || ''],
+                ['Total Marks', entranceMarks.totalFigures || '', toTitleCase(entranceMarks.totalWords) || ''],
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [220, 220, 220], textColor: 0, halign: 'center' },
+        });
+    }
+
     autoTable(doc, {
-        head: [['22', 'Details of Entrance examination']],
+        head: [[hasTakenEntrance ? '23' : '22', 'Details of Marks secured in the SSLC examination']],
         headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
         theme: 'grid',
     });
 
     autoTable(doc, {
         body: [
-            ['22(a)', 'Register No', formData.entranceRegisterNo || ''],
-            ['22(b)', 'Rank', formData.entranceRank || ''],
-        ],
-        theme: 'grid',
-        styles: { fontSize: 9, cellPadding: 1.5 },
-        columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 50 } },
-    });
-
-    autoTable(doc, {
-        head: [
-            [{ content: 'Subject / Paper', rowSpan: 2, styles: { valign: 'middle' } }, { content: 'Marks Scored', colSpan: 2, styles: { halign: 'center' } }],
-            ['In Figures', 'In Words'],
-        ],
-        body: [
-            ['Paper I (Physics & Chemistry)', entranceMarks.paper1Figures || '', entranceMarks.paper1Words || ''],
-            ['Paper II (Mathematics)', entranceMarks.paper2Figures || '', entranceMarks.paper2Words || ''],
-            ['Total Marks', entranceMarks.totalFigures || '', entranceMarks.totalWords || ''],
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [220, 220, 220], textColor: 0, halign: 'center' },
-    });
-
-    autoTable(doc, {
-        head: [['23', 'Details of Marks secured in the SSLC examination']],
-        headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
-        theme: 'grid',
-    });
-
-    autoTable(doc, {
-        body: [
-            ['23(a)', 'Board of Study', formData.sslcBoard || ''],
+            [hasTakenEntrance ? '23(a)' : '22(a)', 'Board of Study', formData.sslcBoard.toUpperCase() || ''],
             ['23(b)', 'Total % of marks', formData.sslcPercentage || ''],
         ],
         theme: 'grid',
@@ -197,7 +213,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
 
     autoTable(doc, {
         body: [
-            ['24', 'Admission Quota', formData.quota || ''],
+            [hasTakenEntrance ? '24' : '23', 'Admission Quota', toSentenceCase(formData.quota) || ''],
         ],
         theme: 'grid',
         styles: { fontSize: 9, cellPadding: 1.5 },
@@ -205,6 +221,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     });
 
     // --- Page 3: Declaration & Certificate ---
+    // This page remains unchanged
     doc.addPage();
     doc.rect(10, 10, pageWidth - 20, pageHeight - 20); // Page 3 Border
 
@@ -222,10 +239,10 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     doc.text(splitDeclaration, 20, finalY);
     finalY += 25;
 
-    doc.text(`Place: ${formData.place || ' '}`, 20, finalY);
+    doc.text(`Place: ${toSentenceCase(formData.place) || ' '}`, 20, finalY);
     doc.text(`Date: ${userDate}`, 20, finalY + 8);
 
-    doc.text(`Name: ${formData.candidateName || ''}`, 120, finalY);
+    doc.text(`Name: ${toTitleCase(formData.candidateName) || ''}`, 120, finalY);
     doc.text('Signature of the Parent:', 20, finalY + 25);
     doc.text('Signature of the Applicant:', 120, finalY + 25);
 
@@ -264,7 +281,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
     doc.text('Name:', 120, finalY);
     finalY += 8;
     doc.text('Designation:', 120, finalY);
-    finalY += 15; 
+    finalY += 15;
 
     doc.setFont(undefined, 'normal');
     const admission = `The above candidate is admitted Provisionally to ___________________________________________ on _______________________________________ under Government / Management / NRI Quota.`;
@@ -290,7 +307,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks) 
         // --- Header ---
         doc.setFontSize(8);
         doc.setTextColor(150); // Set color to a light gray
-        
+
         // Top-left: Current Date and Time
         doc.text(dateTimeString, 10, 7);
 
