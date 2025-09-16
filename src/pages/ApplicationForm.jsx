@@ -21,12 +21,16 @@ export default function ApplicationForm() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // State to control the visibility of the entrance exam section
+  const [hasTakenEntrance, setHasTakenEntrance] = useState(false);
+
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const validateAadhaar = (aadhaar) => /^\d{12}$/.test(aadhaar);
-  const validateMobile = (mobile) => /^\d{10}$/.test(mobile);
+  // Removed validateAadhaar and validateMobile functions as they are no longer needed
+
   const validateFile = (file) => {
     if (!file) return { valid: false, message: "File is required" };
-    if (file.size > 2097152) return { valid: false, message: "File size must be less than 150KB" };
+    // Adjusted file size validation to 150KB as mentioned in the UI text
+    if (file.size > 153600) return { valid: false, message: "File size must be less than 150KB" };
     if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) return { valid: false, message: "Only image files are allowed" };
     return { valid: true };
   };
@@ -60,18 +64,27 @@ export default function ApplicationForm() {
 
   const validateForm = () => {
     const newErrors = {};
+    // Removed entrance fields from this initial check, they will be validated conditionally
     const requiredFields = {
-      candidateName: 'Name is required', email: 'Email is required', permanentAddress: 'Permanent address is required', communicationAddress: 'Communication address is required', dateOfBirth: 'Date of birth is required', age: 'Age is required', gender: 'Gender is required', nationality: 'Nationality is required', place: 'Place is required', religion: 'Religion is required', community: 'Community is required', category: 'Category is required', bloodGroup: 'Blood group is required', aadhaarNumber: 'Aadhaar number is required', quota: 'Admission quota is required', preference1: 'First preference is required', preference2: 'Second preference is required', preference3: 'Third preference is required', fatherName: "Father's name is required", fatherOccupation: "Father's occupation is required", fatherMobile: "Father's mobile is required", motherName: "Mother's name is required", motherOccupation: "Mother's occupation is required", motherMobile: "Mother's mobile is required", annualIncome: 'Annual family income is required', guardianName: "Guardian's name is required", guardianRelation: "Guardian's relation is required", guardianMobileNumber: "Guardian's mobile is required", lastInstitution: 'Last institution is required', boardOfStudy: 'Board of study is required', grandTotal: 'Grand Total is required', totalPercentage: 'Total Percentage is required', totalPCM: 'Total PCM is required', pcmPercentage: 'PCM Percentage is required', entranceRegisterNo: 'Entrance register number is required', entranceRank: 'Entrance rank is required', sslcBoard: 'SSLC board is required', sslcPercentage: 'SSLC percentage is required'
+      candidateName: 'Name is required', email: 'Email is required', permanentAddress: 'Permanent address is required', communicationAddress: 'Communication address is required', dateOfBirth: 'Date of birth is required', age: 'Age is required', gender: 'Gender is required', nationality: 'Nationality is required', place: 'Place is required', religion: 'Religion is required', community: 'Community is required', category: 'Category is required', bloodGroup: 'Blood group is required', aadhaarNumber: 'Aadhaar number is required', quota: 'Admission quota is required', preference1: 'First preference is required', preference2: 'Second preference is required', preference3: 'Third preference is required', fatherName: "Father's name is required", fatherOccupation: "Father's occupation is required", fatherMobile: "Father's mobile is required", motherName: "Mother's name is required", motherOccupation: "Mother's occupation is required", motherMobile: "Mother's mobile is required", annualIncome: 'Annual family income is required', guardianName: "Guardian's name is required", guardianRelation: "Guardian's relation is required", guardianMobileNumber: "Guardian's mobile is required", lastInstitution: 'Last institution is required', boardOfStudy: 'Board of study is required', grandTotal: 'Grand Total is required', totalPercentage: 'Total Percentage is required', totalPCM: 'Total PCM is required', pcmPercentage: 'PCM Percentage is required', sslcBoard: 'SSLC board is required', sslcPercentage: 'SSLC percentage is required'
     };
     Object.keys(requiredFields).forEach(field => {
       if (!formData[field] || formData[field].toString().trim() === '') newErrors[field] = requiredFields[field];
     });
-    const requiredEntranceFields = {
-      paper1Figures: 'Paper 1 marks (figures) is required', paper1Words: 'Paper 1 marks (words) is required', paper2Figures: 'Paper 2 marks (figures) is required', paper2Words: 'Paper 2 marks (words) is required', totalFigures: 'Total marks (figures) is required', totalWords: 'Total marks (words) is required',
-    };
-    Object.keys(requiredEntranceFields).forEach(field => {
-      if (!entranceMarks[field] || entranceMarks[field].toString().trim() === '') newErrors[field] = requiredEntranceFields[field];
-    });
+
+    // Conditional validation for entrance exam fields
+    if (hasTakenEntrance) {
+      if (!formData.entranceRegisterNo) newErrors.entranceRegisterNo = 'Entrance register number is required';
+      if (!formData.entranceRank) newErrors.entranceRank = 'Entrance rank is required';
+
+      const requiredEntranceFields = {
+        paper1Figures: 'Paper 1 marks (figures) is required', paper1Words: 'Paper 1 marks (words) is required', paper2Figures: 'Paper 2 marks (figures) is required', paper2Words: 'Paper 2 marks (words) is required', totalFigures: 'Total marks (figures) is required', totalWords: 'Total marks (words) is required',
+      };
+      Object.keys(requiredEntranceFields).forEach(field => {
+        if (!entranceMarks[field] || entranceMarks[field].toString().trim() === '') newErrors[field] = requiredEntranceFields[field];
+      });
+    }
+
     if (subjects.length === 0) {
       newErrors.subjects = 'Please add at least one subject.';
     } else {
@@ -80,12 +93,12 @@ export default function ApplicationForm() {
       }
     }
     if (formData.email && !validateEmail(formData.email)) newErrors.email = 'Please enter a valid email address';
-    if (formData.aadhaarNumber && !validateAadhaar(formData.aadhaarNumber)) newErrors.aadhaarNumber = 'Aadhaar number must be 12 digits';
-    if (formData.fatherMobile && !validateMobile(formData.fatherMobile)) newErrors.fatherMobile = 'Mobile number must be 10 digits';
-    if (formData.motherMobile && !validateMobile(formData.motherMobile)) newErrors.motherMobile = 'Mobile number must be 10 digits';
-    if (formData.guardianMobileNumber && !validateMobile(formData.guardianMobileNumber)) newErrors.guardianMobileNumber = 'Mobile number must be 10 digits';
+
+    // Removed validation checks for aadhaar and mobile numbers
+
     if (formData.age && (formData.age < 13 || formData.age > 50)) newErrors.age = 'Age must be between 13 and 50';
     if (formData.sslcPercentage && (formData.sslcPercentage < 0 || formData.sslcPercentage > 100)) newErrors.sslcPercentage = 'Percentage must be between 0 and 100';
+
     ['photo', 'parentSignature', 'applicantSignature'].forEach(field => {
       if (!formData[field]) {
         newErrors[field] = `${field === 'photo' ? 'Passport size photo' : field === 'parentSignature' ? 'Parent signature' : 'Applicant signature'} is required`;
@@ -94,11 +107,11 @@ export default function ApplicationForm() {
         if (!validation.valid) newErrors[field] = validation.message;
       }
     });
+
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
-    // ... handleSubmit logic remains the same
     e.preventDefault();
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
@@ -135,7 +148,7 @@ export default function ApplicationForm() {
           submissionDate: new Date().toISOString(),
           formData: finalFormData,
           subjects: subjects,
-          entranceMarks: entranceMarks,
+          entranceMarks: hasTakenEntrance ? entranceMarks : null, // Store entrance marks only if applicable
         };
         transaction.set(newAppRef, applicationData);
         transaction.update(counterRef, { currentNumber: increment(1) });
@@ -167,6 +180,7 @@ export default function ApplicationForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Personal Information Section (Unchanged) */}
           <section className="bg-white shadow-lg rounded-xl border-gray-200 p-6">
             <h3 className="text-xl font-bold text-green-800 mb-4">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,7 +236,7 @@ export default function ApplicationForm() {
             </div>
           </section>
 
-          {/* ... other form sections ... */}
+          {/* Family Information Section (Unchanged) */}
           <section className="bg-white shadow-lg rounded-xl border-gray-200 p-6">
             <h3 className="text-xl font-bold text-green-800 mb-4">Family Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -238,6 +252,8 @@ export default function ApplicationForm() {
               <MemoizedInputField label="Guardian's Mobile No." name="guardianMobileNumber" required value={formData.guardianMobileNumber} onChange={handleInputChange} error={errors.guardianMobileNumber} />
             </div>
           </section>
+
+          {/* Academic Information Section (Unchanged) */}
           <section className="bg-white shadow-lg rounded-xl border-gray-200 p-6">
             <h3 className="text-xl font-bold text-green-800 mb-4">Academic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -279,69 +295,94 @@ export default function ApplicationForm() {
               </div>
             </div>
           </section>
+
+          {/* MODIFIED Entrance & SSLC Section */}
           <section className="bg-white shadow-lg rounded-xl border-gray-200 p-6">
             <h3 className="text-xl font-bold text-green-800 mb-4">Entrance & SSLC Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <MemoizedInputField label="Entrance Register No" name="entranceRegisterNo" required value={formData.entranceRegisterNo} onChange={handleInputChange} error={errors.entranceRegisterNo} />
-              <MemoizedInputField label="Rank" name="entranceRank" required value={formData.entranceRank} onChange={handleInputChange} error={errors.entranceRank} />
-            </div>
+
             <div className="mb-6">
-              <h4 className="font-semibold text-gray-700 mb-3">Entrance Examination Marks <span className="text-red-500">*</span></h4>
-              <div className="overflow-x-auto">
-                <table className="min-w-full table-auto border border-gray-300 rounded-lg">
-                  <thead className="bg-green-800 text-white">
-                    <tr>
-                      <th rowSpan={2} className="px-4 py-2 border-r border-gray-300">Subject / Paper</th>
-                      <th colSpan={2} className="px-4 py-2 text-center">Marks Scored</th>
-                    </tr>
-                    <tr className="bg-green-700">
-                      <th className="px-4 py-2">In Figures</th>
-                      <th className="px-4 py-2">In Words</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-gray-200">
-                      <td className="px-4 py-2 font-medium">Paper I (Physics & Chemistry)</td>
-                      <td className="px-4 py-2">
-                        <input type="text" placeholder="Marks" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.paper1Figures ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.paper1Figures} onChange={(e) => handleEntranceMarkChange('paper1Figures', e.target.value)} />
-                        <ErrorMessage error={errors.paper1Figures} />
-                      </td>
-                      <td className="px-4 py-2">
-                        <input type="text" placeholder="In words" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.paper1Words ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.paper1Words} onChange={(e) => handleEntranceMarkChange('paper1Words', e.target.value)} />
-                        <ErrorMessage error={errors.paper1Words} />
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-200">
-                      <td className="px-4 py-2 font-medium">Paper II (Mathematics)</td>
-                      <td className="px-4 py-2">
-                        <input type="text" placeholder="Marks" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.paper2Figures ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.paper2Figures} onChange={(e) => handleEntranceMarkChange('paper2Figures', e.target.value)} />
-                        <ErrorMessage error={errors.paper2Figures} />
-                      </td>
-                      <td className="px-4 py-2">
-                        <input type="text" placeholder="In words" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.paper2Words ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.paper2Words} onChange={(e) => handleEntranceMarkChange('paper2Words', e.target.value)} />
-                        <ErrorMessage error={errors.paper2Words} />
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-200">
-                      <td className="px-4 py-2 font-medium">Total Marks</td>
-                      <td className="px-4 py-2">
-                        <input type="text" placeholder="Total in figures" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.totalFigures ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.totalFigures} onChange={(e) => handleEntranceMarkChange('totalFigures', e.target.value)} />
-                        <ErrorMessage error={errors.totalFigures} />
-                      </td>
-                      <td className="px-4 py-2">
-                        <input type="text" placeholder="Total in words" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.totalWords ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.totalWords} onChange={(e) => handleEntranceMarkChange('totalWords', e.target.value)} />
-                        <ErrorMessage error={errors.totalWords} />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasTakenEntrance}
+                  onChange={(e) => setHasTakenEntrance(e.target.checked)}
+                  className="h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                />
+                <span className="font-semibold text-gray-700 text-lg">Have you appeared for the Entrance Examination?</span>
+              </label>
+            </div>
+
+            {hasTakenEntrance && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <MemoizedInputField label="Entrance Register No" name="entranceRegisterNo" required value={formData.entranceRegisterNo} onChange={handleInputChange} error={errors.entranceRegisterNo} />
+                  <MemoizedInputField label="Rank" name="entranceRank" required value={formData.entranceRank} onChange={handleInputChange} error={errors.entranceRank} />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-3">Entrance Examination Marks <span className="text-red-500">*</span></h4>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full table-auto border border-gray-300 rounded-lg">
+                      <thead className="bg-green-800 text-white">
+                        <tr>
+                          <th rowSpan={2} className="px-4 py-2 border-r border-gray-300">Subject / Paper</th>
+                          <th colSpan={2} className="px-4 py-2 text-center">Marks Scored</th>
+                        </tr>
+                        <tr className="bg-green-700">
+                          <th className="px-4 py-2">In Figures</th>
+                          <th className="px-4 py-2">In Words</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-gray-200">
+                          <td className="px-4 py-2 font-medium">Paper I (Physics & Chemistry)</td>
+                          <td className="px-4 py-2">
+                            <input type="text" placeholder="Marks" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.paper1Figures ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.paper1Figures} onChange={(e) => handleEntranceMarkChange('paper1Figures', e.target.value)} />
+                            <ErrorMessage error={errors.paper1Figures} />
+                          </td>
+                          <td className="px-4 py-2">
+                            <input type="text" placeholder="In words" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.paper1Words ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.paper1Words} onChange={(e) => handleEntranceMarkChange('paper1Words', e.target.value)} />
+                            <ErrorMessage error={errors.paper1Words} />
+                          </td>
+                        </tr>
+                        <tr className="border-b border-gray-200">
+                          <td className="px-4 py-2 font-medium">Paper II (Mathematics)</td>
+                          <td className="px-4 py-2">
+                            <input type="text" placeholder="Marks" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.paper2Figures ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.paper2Figures} onChange={(e) => handleEntranceMarkChange('paper2Figures', e.target.value)} />
+                            <ErrorMessage error={errors.paper2Figures} />
+                          </td>
+                          <td className="px-4 py-2">
+                            <input type="text" placeholder="In words" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.paper2Words ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.paper2Words} onChange={(e) => handleEntranceMarkChange('paper2Words', e.target.value)} />
+                            <ErrorMessage error={errors.paper2Words} />
+                          </td>
+                        </tr>
+                        <tr className="border-b border-gray-200">
+                          <td className="px-4 py-2 font-medium">Total Marks</td>
+                          <td className="px-4 py-2">
+                            <input type="text" placeholder="Total in figures" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.totalFigures ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.totalFigures} onChange={(e) => handleEntranceMarkChange('totalFigures', e.target.value)} />
+                            <ErrorMessage error={errors.totalFigures} />
+                          </td>
+                          <td className="px-4 py-2">
+                            <input type="text" placeholder="Total in words" className={`w-full border rounded px-2 py-1 focus:ring-2 focus:border-transparent ${errors.totalWords ? 'border-red-500 error-field' : 'border-gray-300'}`} value={entranceMarks.totalWords} onChange={(e) => handleEntranceMarkChange('totalWords', e.target.value)} />
+                            <ErrorMessage error={errors.totalWords} />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-6 mt-6 border-t">
+              <h4 className="font-semibold text-gray-700 mb-3">SSLC Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <MemoizedInputField label="SSLC Board" name="sslcBoard" required value={formData.sslcBoard} onChange={handleInputChange} error={errors.sslcBoard} />
+                <MemoizedInputField placeholder="Ex: 95" label="SSLC Percentage" name="sslcPercentage" type="number" required value={formData.sslcPercentage} onChange={handleInputChange} error={errors.sslcPercentage} />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <MemoizedInputField label="SSLC Board" name="sslcBoard" required value={formData.sslcBoard} onChange={handleInputChange} error={errors.sslcBoard} />
-              <MemoizedInputField placeholder="Ex: 95" label="SSLC Percentage" name="sslcPercentage" type="number" required value={formData.sslcPercentage} onChange={handleInputChange} error={errors.sslcPercentage} />
-            </div>
           </section>
+
+          {/* Document Uploads & Consent Section (Unchanged) */}
           <section className="bg-white shadow-lg rounded-xl border-gray-200 p-6">
             <div>
               <h3 className="text-xl font-bold text-green-800 mb-4">Document Uploads & Consent</h3>
@@ -352,14 +393,15 @@ export default function ApplicationForm() {
               </div>
               <p className="text-gray-500 text-sm mt-4">* Only image files (JPEG, JPG, PNG) are allowed. Maximum file size: 150KB</p>
             </div>
-            <div className="">
-              <h3 className="text-lg font-bold text-gray-600 mt-3">Declaration <span className="text-red-400">*</span></h3>
-              <input type="checkbox" className="mr-2" name="declaration" id="declaration" required/>
-              <label htmlFor="declaration">
-                We, the applicant & parent / guardian do hereby declare that all the information furnished above are true and correct and we will obey the rules and regulations of the Institution, if admitted. Also we understand that the admission shall be, subject to satisfying the eligibility norms prescribed by the Statutory Authorities and the state Govt. from time to time.
-              </label>
+            <div className="mt-6">
+              <h3 className="text-lg font-bold text-gray-700 mb-2">Declaration <span className="text-red-500">*</span></h3>
+              <div className="flex items-start">
+                <input type="checkbox" className="h-5 w-5 mt-1 mr-3 flex-shrink-0" name="declaration" id="declaration" required />
+                <label htmlFor="declaration" className="text-gray-700">
+                  We, the applicant & parent / guardian do hereby declare that all the information furnished above are true and correct and we will obey the rules and regulations of the Institution, if admitted. Also we understand that the admission shall be, subject to satisfying the eligibility norms prescribed by the Statutory Authorities and the state Govt. from time to time.
+                </label>
+              </div>
             </div>
-
           </section>
 
           <div className="flex justify-center pt-6">
