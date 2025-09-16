@@ -6,7 +6,8 @@ import ProtectedRoute from './pages/ProtectedRoute';
 import Success from './pages/Success';
 import { Toaster } from 'react-hot-toast';
 import NotFound from './pages/NotFound';
-
+import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react"
 
 export default function App() {
   return (
@@ -14,6 +15,10 @@ export default function App() {
       {/* 2. Add the Toaster component here */}
       <Toaster position="top-center" reverseOrder={false} />
 
+      {/*  insights vercel */}
+      <SpeedInsights />
+      <Analytics />
+      
       <Routes>
         <Route path="/" element={<ApplicationForm />} />
         <Route path="/admin/login" element={<Login />} />
