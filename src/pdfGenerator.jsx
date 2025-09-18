@@ -163,7 +163,7 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks, 
     });
 
     // --- MODIFIED: Conditionally render the entire entrance exam section ---
-    if (hasTakenEntrance && entranceMarks) {
+    if (entranceMarks) {
         autoTable(doc, {
             head: [['22', 'Details of Entrance examination']],
             headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
