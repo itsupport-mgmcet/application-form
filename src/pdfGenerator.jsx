@@ -93,8 +93,8 @@ export const generateAndDownloadPdf = async (formData, subjects, entranceMarks, 
 
     const personalInfoBody = [
         ['1', 'Name of the Candidate', formData.candidateName.toUpperCase() || ''],
-        ['2', 'Permanent Address', toTitleCase(formData.permanentAddress) || ''],
-        ['3', 'Address For Communication', toTitleCase(formData.communicationAddress) || ''],
+        ['2', 'Permanent Address', toTitleCase(formData.permanentAddress).replace(/\n+/g, " ").trim() || ''],
+        ['3', 'Address For Communication', toTitleCase(formData.communicationAddress).replace(/\n+/g, " ").trim() || ''],
         ['4', 'Email', formData.email.toLowerCase() || ''],
         ['5', 'Date of Birth', formData.dateOfBirth || ''],
         ['6', 'Age', formData.age || ''],
